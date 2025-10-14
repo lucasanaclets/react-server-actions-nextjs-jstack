@@ -1,48 +1,42 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useActionState, useTransition } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Loader2Icon } from "lucide-react";
+import { useFormStatus } from "react-dom";
 
 interface IContactFormProps {
   contact?: {
     name: string;
     email: string;
   };
-  onSubmit?: (formData: { name: string; email: string }) => void;
+  submitAction: (formData: FormData) => Promise<any>;
 }
 
-export function ContactForm({ contact, onSubmit }: IContactFormProps) {
-  const [name, setName] = useState(contact?.name ?? "");
-  const [email, setEmail] = useState(contact?.email ?? "");
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    onSubmit?.({ name, email });
-  }
+export function ContactForm({ contact, submitAction }: IContactFormProps) {
+  const [, clientSubmitAction, isPending] = useActionState(
+    async (_previousData: any, formData: FormData) => submitAction(formData),
+    null
+  );
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
+    <form className="space-y-4" action={clientSubmitAction}>
       <div className="space-y-1.5">
         <Label>Nome</Label>
-        <Input
-          value={name}
-          name="name"
-          onChange={(event) => setName(event.target.value)}
-        />
+        <Input defaultValue={contact?.name} name="name" />
       </div>
 
       <div className="space-y-1.5">
         <Label>E-mail</Label>
-        <Input
-          value={email}
-          name="email"
-          onChange={(event) => setEmail(event.target.value)}
-        />
+        <Input defaultValue={contact?.email} name="email" />
       </div>
 
-      <Button type="submit">{contact ? "Salvar" : "Criar"}</Button>
+      <Button type="submit" disabled={isPending}>
+        {isPending && <Loader2Icon className="size-4 mr-1 animation-spin" />}
+        {contact ? "Salvar" : "Criar"}
+      </Button>
     </form>
   );
 }

@@ -1,23 +1,20 @@
-"use client";
-
 import { ContactForm } from "@/components/ContactForm";
+import { db } from "@/lib/db";
+import { sleep } from "@/lib/utils";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 export default function CreateContactPage() {
-  const router = useRouter();
+  async function submitAction(formData: FormData) {
+    "use server";
 
-  async function handleSubmit(data: { name: string; email: string }) {
-    await fetch("/api/contacts", {
-      method: "POST",
-      body: JSON.stringify(data),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    const data = Object.fromEntries(formData) as {
+      name: string;
+      email: string;
+    };
 
-    router.push("/");
+    await sleep();
+    await db.contact.create({ data });
   }
 
   return (
@@ -35,7 +32,7 @@ export default function CreateContactPage() {
         </h1>
       </header>
 
-      <ContactForm onSubmit={handleSubmit} />
+      <ContactForm submitAction={submitAction} />
     </>
   );
 }
