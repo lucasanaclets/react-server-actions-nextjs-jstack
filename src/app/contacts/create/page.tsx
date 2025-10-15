@@ -11,33 +11,33 @@ const schema = z.object({
   email: z.string().email("Informe um e-mail válido"),
 });
 
-export default function CreateContactPage() {
-  async function submitAction(formData: FormData): Promise<ActionResponse> {
-    "use server";
+async function submitAction(formData: FormData): Promise<ActionResponse> {
+  "use server";
 
-    const data = Object.fromEntries(formData);
-    const parsedData = schema.safeParse(data);
+  const data = Object.fromEntries(formData);
+  const parsedData = schema.safeParse(data);
 
-    if (!parsedData.success) {
-      return {
-        status: "error",
-        body: {
-          message: parsedData.error.issues,
-        },
-      };
-    }
-
-    const { name, email } = parsedData.data;
-
-    await sleep();
-    const contact = await db.contact.create({ data: { name, email } });
-
+  if (!parsedData.success) {
     return {
-      status: "success",
-      body: { contact },
+      status: "error",
+      body: {
+        message: parsedData.error.issues,
+      },
     };
   }
 
+  const { name, email } = parsedData.data;
+
+  await sleep();
+  const contact = await db.contact.create({ data: { name, email } });
+
+  return {
+    status: "success",
+    body: { contact },
+  };
+}
+
+export default function CreateContactPage() {
   return (
     <>
       <header>
