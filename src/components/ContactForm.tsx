@@ -1,28 +1,51 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { useActionState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Loader2Icon } from "lucide-react";
-import { useFormStatus } from "react-dom";
+import { ActionResponse } from "@/types/ActionResponse";
+import { useRouter } from "next/navigation";
+import { ZodIssue } from "zod";
 
 interface IContactFormProps {
   contact?: {
     name: string;
     email: string;
   };
-  submitAction: (formData: FormData) => Promise<any>;
+  submitAction: (formData: FormData) => Promise<ActionResponse>;
 }
 
 export function ContactForm({ contact, submitAction }: IContactFormProps) {
-  const [, clientSubmitAction, isPending] = useActionState(
-    async (_previousData: any, formData: FormData) => submitAction(formData),
+  const router = useRouter();
+
+  const [state, clientSubmitAction, isPending] = useActionState(
+    async (_previousData: any, formData: FormData) => {
+      const response = await submitAction(formData);
+
+      if (response.status === "error") {
+        alert(
+          response.body.message
+            .map((issue: ZodIssue) => issue.message)
+            .join(" / ")
+        );
+      }
+
+      if (response.status === "success") {
+        router.push(`/contacts/${response.body.contact.id}/edit`);
+      }
+
+      return response;
+    },
     null
   );
 
   return (
     <form className="space-y-4" action={clientSubmitAction}>
+      {state?.body.message &&
+        state.body.message.map((issue: ZodIssue) => issue.message).join(" / ")}
+
       <div className="space-y-1.5">
         <Label>Nome</Label>
         <Input defaultValue={contact?.name} name="name" />
